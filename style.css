@@ -232,29 +232,9 @@ body {
   height: 0;
   border-top: 3px solid currentColor;
 }
-.legend-item.bp-line-left { color: var(--left); }
-.legend-item.bp-line-right { color: var(--right); }
-.legend-item.bp-line-avg { color: var(--avg); }
-.legend-item.bp-line-dia::before { border-top-style: dashed; }
-
 .bp-chart { display: block; }
-.bp-grid { stroke: #EBEFF1; stroke-width: 1; }
-.bp-axis-label { font-size: 9px; fill: var(--muted); }
-polyline.bp-line { stroke-linejoin: round; stroke-linecap: round; }
-polyline.bp-line-left { stroke: var(--left); }
-polyline.bp-line-right { stroke: var(--right); }
-polyline.bp-line-avg { stroke: var(--avg); opacity: 0.75; }
-polyline.bp-line-sys { stroke-width: 2; }
-polyline.bp-line-dia { stroke-width: 1.4; stroke-dasharray: 4 3; }
-circle.bp-dot { stroke: none; }
-circle.bp-line-left { fill: var(--left); }
-circle.bp-line-right { fill: var(--right); }
-circle.bp-line-avg { fill: var(--avg); opacity: 0.75; }
-.bp-ref-high { stroke: var(--danger); stroke-width: 1.2; stroke-dasharray: 6 4; }
-.bp-ref-normal { stroke: #2E9463; stroke-width: 1.2; stroke-dasharray: 6 4; }
-text.bp-ref-label { stroke: none; font-size: 9px; font-weight: 700; }
-.bp-ref-high-label { fill: var(--danger); }
-.bp-ref-normal-label { fill: #2E9463; }
+.bp-grid { stroke: #f3f4f6; stroke-width: 1; stroke-dasharray: 3 3; }
+.bp-axis-label { font-size: 10px; fill: #9ca3af; }
 
 .avg-cards { display: flex; gap: 8px; margin-bottom: 14px; }
 .avg-card {

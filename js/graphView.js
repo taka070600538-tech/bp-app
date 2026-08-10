@@ -1,5 +1,5 @@
 import { buildBpChartSvg, SERIES } from './bpChart.js';
-import { formatDate, shiftDate } from './dateUtils.js';
+import { formatDate } from './dateUtils.js';
 import { loadRecords } from './records.js';
 import { filterByPeriod, averages, distribution } from './stats.js';
 import { CATEGORIES } from './classify.js';
@@ -7,7 +7,7 @@ import { CATEGORIES } from './classify.js';
 const PERIODS = [7, 14, 30];
 
 function legendHtml() {
-  return `<div class="chart-legend">${SERIES.map((s) => `<span class="legend-item ${s.cls}">${s.label}</span>`).join('')}</div>`;
+  return `<div class="chart-legend">${SERIES.map((s) => `<span class="legend-item" style="color:${s.color}">${s.label}</span>`).join('')}</div>`;
 }
 
 function averageCards(avg) {
@@ -65,9 +65,9 @@ export function renderGraphView(container) {
     container.innerHTML = `
       <section class="panel">
         <h2 class="panel-title">血圧トレンド</h2>
-        <p class="panel-note">基準線: 高血圧 140/90 ・ 正常 120/70</p>
+        <p class="panel-note">基準線: 高血圧 140/90 ・ 高値 130/80 ・ 正常 120/70</p>
         ${legendHtml()}
-        ${buildBpChartSvg(records, { fromDate: shiftDate(today, -(state.days - 1)), toDate: today })}
+        ${buildBpChartSvg(records)}
       </section>
       ${periodButtons}
       ${averageCards(avg)}
