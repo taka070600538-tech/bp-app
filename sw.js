@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bp-app-v3';
+const CACHE_NAME = 'bp-app-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -23,7 +23,14 @@ const ASSETS = [
 // オフライン時はどのみち保存できず、キャッシュすると更新が届かなくなるため。
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  // cache:'reload'でブラウザHTTPキャッシュを迂回する。素のaddAllだと、
+  // 古いHTTPキャッシュの内容が新しいキャッシュ名の箱に入り込み、
+  // 以後どれだけ再起動しても旧版が配信され続ける事故が起きる。
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' })))
+    )
+  );
   self.skipWaiting();
 });
 
