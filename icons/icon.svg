@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12565C"/>
+      <stop offset="1" stop-color="#12787D"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <path d="M256 428 C256 428 100 334 100 210 C100 148 146 108 200 108 C232 108 256 128 256 156 C256 128 280 108 312 108 C366 108 412 148 412 210 C412 334 256 428 256 428 Z" fill="#FFFFFF"/>
+  <polyline points="76,262 180,262 208,196 244,318 272,238 292,262 436,262"
+    fill="none" stroke="#0E4A50" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
