@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { upsertRecord, loadRecords, saveRecords } from '../js/records.js';
+import { upsertRecord, loadRecords, saveRecords, mergeRecords } from '../js/records.js';
 
 function fakeStorage(initial = {}) {
   const map = new Map(Object.entries(initial));
@@ -41,4 +41,23 @@ test('load/saveRecords: storage経由で往復できる', () => {
 test('loadRecords: 未保存・壊れたJSONは空配列を返す', () => {
   assert.deepEqual(loadRecords(fakeStorage()), []);
   assert.deepEqual(loadRecords(fakeStorage({ 'bp-app:records': '{oops' })), []);
+});
+
+test('mergeRecords: 日付が被らない場合は両方残る', () => {
+  const out = mergeRecords([rec('2026-08-09')], [rec('2026-08-10')]);
+  assert.deepEqual(out.map((r) => r.date), ['2026-08-09', '2026-08-10']);
+});
+
+test('mergeRecords: 日付が被る場合はimported側の値が採用される', () => {
+  const out = mergeRecords([rec('2026-08-09', 120)], [rec('2026-08-09', 150)]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].sysL, 150);
+});
+
+test('mergeRecords: 結果は日付でソートされている', () => {
+  const out = mergeRecords(
+    [rec('2026-08-10')],
+    [rec('2026-08-08'), rec('2026-08-09')]
+  );
+  assert.deepEqual(out.map((r) => r.date), ['2026-08-08', '2026-08-09', '2026-08-10']);
 });

@@ -20,3 +20,7 @@ export function loadRecords(storage) {
 export function saveRecords(storage, records) {
   storage.setItem(KEY, JSON.stringify(records));
 }
+
+export function mergeRecords(existing, imported) {
+  return imported.reduce((acc, record) => upsertRecord(acc, record), existing);
+}
