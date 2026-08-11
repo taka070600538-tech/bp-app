@@ -1,12 +1,20 @@
-const VIEW_WIDTH = 374;
 const VIEW_HEIGHT = 480;
 
 const PLOT_LEFT = 35;
-const PLOT_RIGHT = 364;
+const RIGHT_MARGIN = 10; // viewWidthとplotRightの差(右余白)
+const MIN_VIEW_WIDTH = 374; // 30点以下はこの固定幅
 const PLOT_TOP = 6;
 const PLOT_BOTTOM = 425; // 下側はx軸ラベル用に余白55
-const PLOT_WIDTH = PLOT_RIGHT - PLOT_LEFT;
 const PLOT_HEIGHT = PLOT_BOTTOM - PLOT_TOP;
+// 30点表示時の点間隔。31点以上ではこれを下回らないよう幅を広げる基準値にする。
+const SPACING_30 = (364 - 35) / 29;
+const X_LABEL_MIN_GAP = 45; // x軸ラベル1つあたりに確保する最低幅(px)
+
+// 表示点数Nに応じたSVG全体の幅。30点までは固定、31点以上は間隔がspacing30を下回らないよう広げる。
+function computeViewWidth(n) {
+  if (n <= 30) return MIN_VIEW_WIDTH;
+  return PLOT_LEFT + (n - 1) * SPACING_30 + RIGHT_MARGIN;
+}
 
 const X_LABEL_Y = 433;
 const Y_LABEL_X = 27;
@@ -17,8 +25,7 @@ const REF_HIGH = { sys: 140, dia: 90, color: '#ef4444' }; // 高血圧
 const REF_ELEVATED = { sys: 130, dia: 80, color: '#facc15' }; // 高値血圧
 const REF_NORMAL = { sys: 120, dia: 70, color: '#3b82f6' }; // 正常
 
-// 系列定義(凡例順も参考アプリに合わせて 右→平均→左)。色・線幅・ドット寸法を直書きし、
-// legendHtml()側もこの色をそのまま使うことでスウォッチと線色を一致させる。
+// 系列定義(描画順も参考アプリに合わせて 右→平均→左)。色・線幅・ドット寸法を直書き。
 export const SERIES = [
   { id: 'sysR', label: '右腕(上)', color: '#38bdf8', lineWidth: 1, dotRadius: 1.5, dotStrokeWidth: 1, pick: (r) => r.sysR },
   { id: 'diaR', label: '右腕(下)', color: '#e0f2fe', lineWidth: 1, dotRadius: 1.5, dotStrokeWidth: 1, pick: (r) => r.diaR },
@@ -109,21 +116,24 @@ export function buildBpChartSvg(records) {
   const axis = computeAxis(records);
   const span = axis.top - axis.bottom;
   const n = records.length;
+  const viewWidth = computeViewWidth(n);
+  const plotRight = viewWidth - RIGHT_MARGIN;
+  const plotWidth = plotRight - PLOT_LEFT;
 
-  const xFor = (i) => (n === 1 ? (PLOT_LEFT + PLOT_RIGHT) / 2 : PLOT_LEFT + (i / (n - 1)) * PLOT_WIDTH);
+  const xFor = (i) => (n === 1 ? (PLOT_LEFT + plotRight) / 2 : PLOT_LEFT + (i / (n - 1)) * plotWidth);
   const yFor = (value) => PLOT_TOP + PLOT_HEIGHT * (1 - (value - axis.bottom) / span);
 
   // 5mmHgごとの水平グリッド線と数値ラベル(垂直グリッドは無し)。
   let grid = '';
   for (let v = axis.bottom; v <= axis.top; v += 5) {
     const y = round2(yFor(v));
-    grid += `<line class="bp-grid" x1="${PLOT_LEFT}" y1="${y}" x2="${PLOT_RIGHT}" y2="${y}" />`;
+    grid += `<line class="bp-grid" x1="${PLOT_LEFT}" y1="${y}" x2="${round2(plotRight)}" y2="${y}" />`;
     grid += `<text class="bp-axis-label" x="${Y_LABEL_X}" y="${round2(y + 3)}" text-anchor="end" fill="${AXIS_LABEL_COLOR}">${v}</text>`;
   }
 
   const refLine = (value, color) => {
     const y = round2(yFor(value));
-    return `<line x1="${PLOT_LEFT}" y1="${y}" x2="${PLOT_RIGHT}" y2="${y}" style="stroke:${color}; stroke-width:1.2; stroke-dasharray:4 4;" />`;
+    return `<line x1="${PLOT_LEFT}" y1="${y}" x2="${round2(plotRight)}" y2="${y}" style="stroke:${color}; stroke-width:1.2; stroke-dasharray:4 4;" />`;
   };
   const refs = refLine(REF_HIGH.sys, REF_HIGH.color) + refLine(REF_HIGH.dia, REF_HIGH.color)
     + refLine(REF_ELEVATED.sys, REF_ELEVATED.color) + refLine(REF_ELEVATED.dia, REF_ELEVATED.color)
@@ -139,8 +149,9 @@ export function buildBpChartSvg(records) {
     return path + dots;
   }).join('');
 
-  // 記録が8件以上のときはx軸ラベルを間引く(線とドットは全点描く)。
-  const interval = n >= 8 ? Math.ceil(n / 7) : 1;
+  // ラベル1つあたり最低45pxを確保できるよう、画面密度ベースで間引く(線とドットは全点描く)。
+  const spacing = n > 1 ? plotWidth / (n - 1) : 0;
+  const interval = n > 1 ? Math.max(1, Math.ceil(X_LABEL_MIN_GAP / spacing)) : 1;
   const xLabels = records
     .map((r, i) => {
       if (i % interval !== 0 && i !== n - 1) return '';
@@ -150,8 +161,10 @@ export function buildBpChartSvg(records) {
 
   const first = toMonthDay(records[0].date);
   const last = toMonthDay(records[n - 1].date);
+  // 31点以上で幅が374を超えるときだけmin-widthを付け、横スクロールで全点を見せる。
+  const minWidthAttr = viewWidth > MIN_VIEW_WIDTH ? ` style="min-width:${round2(viewWidth)}px"` : '';
 
-  return `<svg class="bp-chart" viewBox="0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}" width="100%" role="img" aria-label="${first}から${last}までの血圧トレンド">
+  return `<svg class="bp-chart" viewBox="0 0 ${round2(viewWidth)} ${VIEW_HEIGHT}" width="100%"${minWidthAttr} role="img" aria-label="${first}から${last}までの血圧トレンド">
   ${grid}
   ${refs}
   ${seriesSvg}

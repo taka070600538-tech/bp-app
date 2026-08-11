@@ -1,14 +1,8 @@
-import { buildBpChartSvg, SERIES } from './bpChart.js';
-import { formatDate } from './dateUtils.js';
+import { buildBpChartSvg } from './bpChart.js';
+import { formatDate, shiftDate } from './dateUtils.js';
 import { loadRecords } from './records.js';
-import { filterByPeriod, averages, distribution } from './stats.js';
+import { filterFromDate, averages, distribution } from './stats.js';
 import { CATEGORIES } from './classify.js';
-
-const PERIODS = [7, 14, 30];
-
-function legendHtml() {
-  return `<div class="chart-legend">${SERIES.map((s) => `<span class="legend-item" style="color:${s.color}">${s.label}</span>`).join('')}</div>`;
-}
 
 function averageCards(avg) {
   const card = (title, cls, { sys, dia }) => `
@@ -40,19 +34,21 @@ function distributionHtml(records) {
 }
 
 export function renderGraphView(container) {
-  const state = { days: 7 };
+  const today = formatDate(new Date());
+  const state = { fromDate: shiftDate(today, -7) };
+
+  function dateFieldHtml() {
+    return `<label class="date-field">表示開始日(この日から今日まで)
+      <input type="date" id="graph-from-date" value="${state.fromDate}" max="${today}">
+    </label>`;
+  }
 
   function render() {
-    const today = formatDate(new Date());
-    const records = filterByPeriod(loadRecords(localStorage), state.days, today);
-
-    const periodButtons = `<div class="period-row">${PERIODS.map((d) =>
-      `<button type="button" class="period-btn ${d === state.days ? 'is-active' : ''}" data-days="${d}">過去 ${d} 日間</button>`
-    ).join('')}</div>`;
+    const records = filterFromDate(loadRecords(localStorage), state.fromDate, today);
 
     if (records.length === 0) {
       container.innerHTML = `
-        ${periodButtons}
+        ${dateFieldHtml()}
         <div class="empty-state">
           <p class="empty-title">グラフデータがありません</p>
           <p>「記録」タブから毎日の血圧を登録して、血圧トレンドグラフを確認しましょう。</p>
@@ -63,26 +59,29 @@ export function renderGraphView(container) {
 
     const avg = averages(records);
     container.innerHTML = `
+      ${dateFieldHtml()}
       <section class="panel">
         <h2 class="panel-title">血圧トレンド</h2>
-        <p class="panel-note">基準線: 高血圧 140/90 ・ 高値 130/80 ・ 正常 120/70</p>
-        ${legendHtml()}
-        ${buildBpChartSvg(records)}
+        <div class="chart-scroll">${buildBpChartSvg(records)}</div>
       </section>
-      ${periodButtons}
       ${averageCards(avg)}
       ${distributionHtml(records)}
     `;
     bind();
+
+    // 横スクロールを最新日付側(右端)に合わせる。
+    const scroller = container.querySelector('.chart-scroll');
+    if (scroller) scroller.scrollLeft = scroller.scrollWidth;
   }
 
   function bind() {
-    container.querySelectorAll('.period-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        state.days = Number(btn.dataset.days);
+    const dateInput = container.querySelector('#graph-from-date');
+    if (dateInput) {
+      dateInput.addEventListener('change', () => {
+        state.fromDate = dateInput.value;
         render();
       });
-    });
+    }
   }
 
   render();

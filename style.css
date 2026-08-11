@@ -195,43 +195,7 @@ body {
 }
 
 /* ---- グラフタブ ---- */
-.period-row { display: flex; gap: 8px; margin-bottom: 14px; }
-.period-btn {
-  flex: 1;
-  padding: 9px 0;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--card);
-  color: var(--muted);
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-.period-btn.is-active {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: #fff;
-  font-weight: 700;
-}
-
-.chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin-bottom: 6px;
-}
-.legend-item {
-  font-size: 0.7rem;
-  color: var(--muted);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.legend-item::before {
-  content: "";
-  width: 16px;
-  height: 0;
-  border-top: 3px solid currentColor;
-}
+.chart-scroll { overflow-x: auto; }
 .bp-chart { display: block; }
 .bp-grid { stroke: #f3f4f6; stroke-width: 1; stroke-dasharray: 3 3; }
 .bp-axis-label { font-size: 10px; fill: #9ca3af; }

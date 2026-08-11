@@ -70,16 +70,43 @@ test('buildBpChartSvg: x軸ラベルは記録7件なら全件表示', () => {
   assert.equal(labels.length, 7);
 });
 
-test('buildBpChartSvg: x軸ラベルは記録30件なら間引かれる(interval=ceil(30/7)=5)', () => {
-  const records = Array.from({ length: 30 }, (_, i) => {
+function manyRecords(n) {
+  return Array.from({ length: n }, (_, i) => {
     const day = String((i % 28) + 1).padStart(2, '0');
-    return rec(`2026-${i < 28 ? '08' : '09'}-${day}`, 120, 80, 118, 78);
+    const month = String(8 + Math.floor(i / 28)).padStart(2, '0');
+    return rec(`2026-${month}-${day}`, 120, 80, 118, 78);
   });
+}
+
+test('buildBpChartSvg: 30点以下はviewBox幅374固定でmin-widthを付けない', () => {
+  const svg30 = buildBpChartSvg(manyRecords(30));
+  assert.match(svg30, /viewBox="0 0 374 480"/);
+  assert.ok(!svg30.includes('min-width'));
+
+  const svg10 = buildBpChartSvg(manyRecords(10));
+  assert.match(svg10, /viewBox="0 0 374 480"/);
+});
+
+test('buildBpChartSvg: 31点以上は間隔を保つため幅が広がりmin-widthが付く', () => {
+  const svg31 = buildBpChartSvg(manyRecords(31));
+  const m31 = svg31.match(/viewBox="0 0 ([\d.]+) 480"/);
+  assert.ok(m31);
+  const width31 = Number(m31[1]);
+  assert.ok(width31 > 374);
+  assert.match(svg31, new RegExp(`style="min-width:${width31}px"`));
+
+  const svg60 = buildBpChartSvg(manyRecords(60));
+  const m60 = svg60.match(/viewBox="0 0 ([\d.]+) 480"/);
+  const width60 = Number(m60[1]);
+  assert.ok(width60 > width31, '点数が増えるほど幅も広がる');
+});
+
+test('buildBpChartSvg: x軸ラベルは画面密度ベースで間引かれる(60点、最低45px確保)', () => {
+  const records = manyRecords(60);
   const svg = buildBpChartSvg(records);
   const labels = [...svg.matchAll(/text-anchor="middle"/g)];
-  // インデックス0,5,10,15,20,25(倍数)+最後の29 = 7個
-  assert.equal(labels.length, 7);
-  assert.ok(labels.length < 30);
+  // spacing30=(364-35)/29、interval=ceil(45/spacing30)=4 → 0,4,...,56(15個)+最後の59 = 16個
+  assert.equal(labels.length, 16);
 });
 
 test('monotonePath: 点が0個・1個なら線を描かない', () => {

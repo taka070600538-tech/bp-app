@@ -1,10 +1,8 @@
 import { classifyBP, CATEGORIES } from './classify.js';
-import { shiftDate } from './dateUtils.js';
 
-// 今日を含む直近days日分(例: days=7なら今日-6日〜今日)。
-export function filterByPeriod(records, days, today) {
-  const from = shiftDate(today, -(days - 1));
-  return records.filter((r) => r.date >= from && r.date <= today);
+// 開始日から今日までの範囲(両端含む)。
+export function filterFromDate(records, fromDate, today) {
+  return records.filter((r) => r.date >= fromDate && r.date <= today);
 }
 
 function mean(values) {

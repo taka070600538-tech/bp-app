@@ -1,13 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { filterByPeriod, averages, distribution } from '../js/stats.js';
+import { filterFromDate, averages, distribution } from '../js/stats.js';
 
 const rec = (date, sysL, diaL, sysR, diaR) => ({ date, sysL, diaL, sysR, diaR });
 
-test('filterByPeriod: 今日を含む直近N日分だけ残す', () => {
-  const records = [rec('2026-08-01', 120, 80, 120, 80), rec('2026-08-04', 120, 80, 120, 80), rec('2026-08-10', 120, 80, 120, 80)];
-  const out = filterByPeriod(records, 7, '2026-08-10');
-  assert.deepEqual(out.map((r) => r.date), ['2026-08-04', '2026-08-10']);
+test('filterFromDate: 開始日から今日までの範囲を残す(境界含む)', () => {
+  const records = [
+    rec('2026-08-03', 120, 80, 120, 80), // 範囲外(fromDateより前)
+    rec('2026-08-04', 120, 80, 120, 80), // fromDate自身(境界)
+    rec('2026-08-07', 120, 80, 120, 80),
+    rec('2026-08-10', 120, 80, 120, 80), // today自身(境界)
+  ];
+  const out = filterFromDate(records, '2026-08-04', '2026-08-10');
+  assert.deepEqual(out.map((r) => r.date), ['2026-08-04', '2026-08-07', '2026-08-10']);
 });
 
 test('averages: 左・右・左右総合の平均を四捨五入で返す', () => {
